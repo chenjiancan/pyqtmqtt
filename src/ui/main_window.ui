@@ -373,6 +373,25 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QComboBox" name="comboBoxQosPub">
+        <item>
+         <property name="text">
+          <string>0-At most once</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1-At leastonce</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>2-Exactly once</string>
+         </property>
+        </item>
+       </widget>
+      </item>
      </layout>
     </widget>
     <widget class="QWidget" name="layoutWidget">
@@ -387,6 +406,12 @@
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
        <widget class="QLabel" name="labelTopicSub">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="minimumSize">
          <size>
           <width>50</width>
@@ -399,7 +424,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEditTopicSub">
+       <widget class="QComboBox" name="comboBoxSubTopics">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -412,9 +437,55 @@
           <height>0</height>
          </size>
         </property>
-        <property name="text">
-         <string>pyqttopic/#</string>
+        <property name="editable">
+         <bool>true</bool>
         </property>
+        <property name="insertPolicy">
+         <enum>QComboBox::InsertAtTop</enum>
+        </property>
+        <item>
+         <property name="text">
+          <string>pyqttopic/#</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonUnsub">
+        <property name="text">
+         <string>unsubscribe</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboBoxQosSub">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>40</width>
+          <height>0</height>
+         </size>
+        </property>
+        <item>
+         <property name="text">
+          <string>0-At most once</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1-At leastonce</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>2-Exactly once</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item>
@@ -465,6 +536,13 @@
         </property>
         <property name="text">
          <string>on</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBoxRetainedPub">
+        <property name="text">
+         <string>retained</string>
         </property>
        </widget>
       </item>

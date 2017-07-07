@@ -7,7 +7,9 @@ from threading import Thread
 from copy import deepcopy, copy
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.DEBUG)
+
+
 class MqttClient(mqtt.Client):
 
     def __init__(self, client_id="", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp"):

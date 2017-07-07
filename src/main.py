@@ -2,6 +2,7 @@ import os
 import random
 import sys
 import uuid
+from PyQt5 import Qt
 from time import sleep
 
 import datetime
@@ -28,6 +29,7 @@ logging.basicConfig(handlers=[fileLogHandler, streamLogHandler],
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 DEFAULT_HOST = "broker.mqttdashboard.com"
 
@@ -47,23 +49,64 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.lineEditHost.setText(DEFAULT_HOST)
 
+        self.comboBoxQosSub.setItemData(0, 0)
+        self.comboBoxQosSub.setItemData(1, 1)
+        self.comboBoxQosSub.setItemData(2, 2)
+        self.comboBoxQosPub.setItemData(0, 0)
+        self.comboBoxQosPub.setItemData(1, 1)
+        self.comboBoxQosPub.setItemData(2, 2)
+
+        # combobox edit
+        self.comboBoxSubTopics.setEditable(True)
+        self.comboBoxSubTopics.setEditText("pyqttopic/#")
+
         # mqtt client init
         self.is_connected = False
         self.mqtt_client = None
 
+    # def on_comboBoxSubTopics_editTextChanged(self, s):
+    #     logger.debug(self.comboBoxSubTopics.currentText())
+    @pyqtSlot(int)
+    def on_comboBoxSubTopics_currentIndexChanged(self, i):
+        logger.debug("current index {}".format(i))
+
+    def sub_unsubscribe(self, sub, topic, qos=0):
+        if self.mqtt_client.is_connected:
+            if sub:
+                logger.info("sub to mqtt topic: {}".format(topic))
+                self.mqtt_client.subscribe(topic=topic, qos=qos)
+            else:
+                logger.info("sub to mqtt topic: {}".format(topic))
+                self.mqtt_client.unsubscribe(topic=topic)
+
+        else:
+            logger.info("sub failed, client is not connected")
+
+    @pyqtSlot()
+    def on_pushButtonUnsub_clicked(self):
+        topic = self.comboBoxSubTopics.currentText()
+        self.sub_unsubscribe(False, topic=topic)
+
+
     def on_mqtt_msg(self, client, userdata, message: mqtt.MQTTMessage):
         msg = message.payload.decode()
-        logger.info("received msg: topic:{0} ||  payload:{1}".format(message.topic, msg))
+        logger.info("client received msg: topic:{0} ||  payload:{1}".format(message.topic, msg))
         msg = str(datetime.datetime.now())[:-7] + ": " + message.topic + " == " + msg
         self.textBrowserReceived.append(msg)
 
     def on_mqtt_connect(self, client, userdata, flags, rc):
+        logger.info("client connected userdata:{0} || flags:{1} ||  rc:{2}".format(userdata, flags, rc))
         self.pushButtonSub.setEnabled(True)
         self.pushButtonPub.setEnabled(True)
 
-    def on_mqtt_disconnect(self, client, userdata, flags, rc):
+    def on_mqtt_disconnect(self, client, userdata, rc):
+        logger.info("client connected userdata:{0} || rc:{1}".format(userdata, rc))
         self.pushButtonSub.setEnabled(False)
         self.pushButtonPub.setEnabled(False)
+
+    # @pyqtSlot(int)
+    # def on_comboBoxQosSub_currentIndexChanged(self, *args):
+    #     logger.debug(args)
 
     @pyqtSlot()
     def on_pushButtonClientIdGenerate_clicked(self):
@@ -106,9 +149,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def on_pushButtonSub_clicked(self):
         if self.mqtt_client.is_connected:
-            logger.info("sub to mqtt topic: {}".format(self.lineEditTopicSub.text()))
-            topic = self.lineEditTopicSub.text()
-            self.mqtt_client.subscribe(topic=topic, qos=1)
+            # logger.info("sub to mqtt topic: {}".format(self.lineEditTopicSub.text()))
+            # topic = self.lineEditTopicSub.text()
+            topic = self.comboBoxSubTopics.currentText()
+            qos = self.comboBoxQosSub.currentData()
+            self.sub_unsubscribe(True, topic=topic, qos=qos)
+            # self.mqtt_client.subscribe(topic=topic, qos=qos)
         else:
             logger.info("sub failed, client is not connected")
 
@@ -118,10 +164,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             logger.info("pub to mqtt topic: {}".format(self.lineEditTopicPub.text()))
             topic = self.lineEditTopicPub.text()
             msg = self.lineEditMsgPub.text()
-            self.mqtt_client.publish(topic=topic, payload=msg.encode())
+
+            retained = self.checkBoxRetainedPub.isChecked()
+            qos = self.comboBoxQosPub.currentData()
+
+            if msg:
+                self.mqtt_client.publish(topic=topic, payload=msg.encode(), qos=qos, retain=retained)
+            else:
+                self.mqtt_client.publish(topic=topic, payload=None, qos=qos, retain=retained)
         else:
             logger.info("pub failed, client is not connected")
 
+    def on_(self):
+        self.close
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
