@@ -1,3 +1,4 @@
+import os
 import random
 import sys
 import uuid
@@ -11,11 +12,25 @@ import paho.mqtt.client as mqtt
 from mqttutils import MqttClient
 from ui.ui_main_window import Ui_MainWindow
 
+import logging
 
-# from src.mqttutils import *
+LOG_PATH = "../log/"
+LOG_FILENAME = "log.txt"
 
+if not os.path.exists(LOG_PATH):
+    os.makedirs(LOG_PATH, exist_ok=True)
+
+fileLogHandler = logging.FileHandler(os.path.join(LOG_PATH, LOG_FILENAME))
+streamLogHandler = logging.StreamHandler()
+logging.basicConfig(handlers=[fileLogHandler, streamLogHandler],
+                    format="%(levelname)s: %(name)s: %(asctime)s ==> %(message)s",
+                    datefmt="%y-%m-%d %H:%M:%S",
+                    level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_HOST = "broker.mqttdashboard.com"
+
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     # class MainWindow(QMainWindow):
@@ -32,15 +47,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.lineEditHost.setText(DEFAULT_HOST)
 
-
         # mqtt client init
         self.is_connected = False
         self.mqtt_client = None
 
-    def on_mqtt_msg(self, client, userdata, message:mqtt.MQTTMessage):
+    def on_mqtt_msg(self, client, userdata, message: mqtt.MQTTMessage):
         msg = message.payload.decode()
+        logger.info("received msg: topic:{0} ||  payload:{1}".format(message.topic, msg))
         msg = str(datetime.datetime.now())[:-7] + ": " + message.topic + " == " + msg
-        print(msg)
         self.textBrowserReceived.append(msg)
 
     def on_mqtt_connect(self, client, userdata, flags, rc):
@@ -51,7 +65,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pushButtonSub.setEnabled(False)
         self.pushButtonPub.setEnabled(False)
 
-
     @pyqtSlot()
     def on_pushButtonClientIdGenerate_clicked(self):
         client_id = uuid.uuid4()
@@ -61,7 +74,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_pushButtonConnect_clicked(self, para):
         host = self.lineEditHost.text()
         port = int(self.lineEditPort.text())
-        print("connecting to mqtt host: {0}:{1}".format(host, port))
+        logger.info("connecting to mqtt host: {0}:{1}".format(host, port))
 
         client_id = self.lineEditPortClientId.text()
         keepalive = int(self.spinBoxKeepAlive.value())
@@ -69,14 +82,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         auto_connect = self.checkBoxAutoConnect.isChecked()
         username = self.lineEditPortUserName.text()
         password = self.lineEditPortPassword.text()
-        #
-        # if self.mqtt_client.is_called_connect:
-        #     # self.mqtt_client.loop_stop()
-        #     self.mqtt_client.disconnect()
 
-        # self.mqtt_client = MqttClient(client_id=client_id,
-        #                               clean_session=clean_session,
-        #                               )
         if self.mqtt_client:
             self.mqtt_client.loop_stop()
             self.mqtt_client.reinitialise(client_id=client_id, clean_session=clean_session)
@@ -90,30 +96,31 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         try:
             self.mqtt_client.username_pw_set(username=username, password=password)
-            self.mqtt_client.connect(host=host, port=port, keepalive=keepalive)  # loop_start 先调用则阻塞， 后调用则不阻塞
+            rc = self.mqtt_client.connect(host=host, port=port, keepalive=keepalive)  # loop_start 先调用则阻塞， 后调用则不阻塞
             # self.mqtt_client.connect(host=host, port=8883, keepalive=keepalive)  # loop_start 先调用则阻塞， 后调用则不阻塞
+            logger.info("client called connect with rc: {}".format(rc))
             self.mqtt_client.loop_start()
-        # print("is_connected", self.mqtt_client.is_connected)
         except Exception as e:
-            print(e)
+            logger.info(e)
+
     @pyqtSlot()
     def on_pushButtonSub_clicked(self):
         if self.mqtt_client.is_connected:
-            print("sub to mqtt topic: {}".format(self.lineEditTopicSub.text()))
+            logger.info("sub to mqtt topic: {}".format(self.lineEditTopicSub.text()))
             topic = self.lineEditTopicSub.text()
             self.mqtt_client.subscribe(topic=topic, qos=1)
         else:
-            print("sub failed, client is not connected")
+            logger.info("sub failed, client is not connected")
 
     @pyqtSlot()
     def on_pushButtonPub_clicked(self):
         if self.mqtt_client.is_connected:
-            print("pub to mqtt topic: {}".format(self.lineEditTopicPub.text()))
+            logger.info("pub to mqtt topic: {}".format(self.lineEditTopicPub.text()))
             topic = self.lineEditTopicPub.text()
             msg = self.lineEditMsgPub.text()
             self.mqtt_client.publish(topic=topic, payload=msg.encode())
         else:
-            print("pub failed, client is not connected")
+            logger.info("pub failed, client is not connected")
 
 
 if __name__ == '__main__':
