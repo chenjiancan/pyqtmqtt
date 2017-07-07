@@ -42,10 +42,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.ui.setupUi(self)
         self.setupUi(self)
 
+        self.setWindowTitle("MQTT PyQt Client")
         self.checkBoxCleanSession.setChecked(True)
         self.spinBoxKeepAlive.setValue(60)
         self.pushButtonSub.setEnabled(False)
         self.pushButtonPub.setEnabled(False)
+        self.pushButtonUnsub.setEnabled(False)
 
         self.lineEditHost.setText(DEFAULT_HOST)
 
@@ -60,9 +62,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.comboBoxSubTopics.setEditable(True)
         self.comboBoxSubTopics.setEditText("pyqttopic/#")
 
+        self.statusbar.show()
+        self.statusbar.showMessage("statusbar message here!", msecs=5000 )
+
         # mqtt client init
         self.is_connected = False
         self.mqtt_client = None
+
+
+
 
     # def on_comboBoxSubTopics_editTextChanged(self, s):
     #     logger.debug(self.comboBoxSubTopics.currentText())
@@ -98,11 +106,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         logger.info("client connected userdata:{0} || flags:{1} ||  rc:{2}".format(userdata, flags, rc))
         self.pushButtonSub.setEnabled(True)
         self.pushButtonPub.setEnabled(True)
+        self.pushButtonUnsub.setEnabled(True)
+        self.statusbar.showMessage("mqtt client connected success!", msecs=5000)
 
     def on_mqtt_disconnect(self, client, userdata, rc):
         logger.info("client connected userdata:{0} || rc:{1}".format(userdata, rc))
         self.pushButtonSub.setEnabled(False)
         self.pushButtonPub.setEnabled(False)
+        self.pushButtonUnsub.setEnabled(False)
 
     # @pyqtSlot(int)
     # def on_comboBoxQosSub_currentIndexChanged(self, *args):
@@ -142,7 +153,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             rc = self.mqtt_client.connect(host=host, port=port, keepalive=keepalive)  # loop_start 先调用则阻塞， 后调用则不阻塞
             # self.mqtt_client.connect(host=host, port=8883, keepalive=keepalive)  # loop_start 先调用则阻塞， 后调用则不阻塞
             logger.info("client called connect with rc: {}".format(rc))
+            self.statusbar.showMessage("mqtt client is connecting!", msecs=5000)
             self.mqtt_client.loop_start()
+
         except Exception as e:
             logger.info(e)
 
