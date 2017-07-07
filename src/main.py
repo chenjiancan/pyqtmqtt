@@ -69,7 +69,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.is_connected = False
         self.mqtt_client = None
 
-
+        # style
+        # self.lineEditHost.setStyleSheet("QLineEdit{border:1px solid rgb(255, 180, 180); background:rgb(100,100,250);}")
 
 
     # def on_comboBoxSubTopics_editTextChanged(self, s):
@@ -108,6 +109,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pushButtonPub.setEnabled(True)
         self.pushButtonUnsub.setEnabled(True)
         self.statusbar.showMessage("mqtt client connected success!", msecs=5000)
+
+        self.pushButtonConnect.setEnabled(True)
 
     def on_mqtt_disconnect(self, client, userdata, rc):
         logger.info("client connected userdata:{0} || rc:{1}".format(userdata, rc))
@@ -153,6 +156,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             rc = self.mqtt_client.connect(host=host, port=port, keepalive=keepalive)  # loop_start 先调用则阻塞， 后调用则不阻塞
             # self.mqtt_client.connect(host=host, port=8883, keepalive=keepalive)  # loop_start 先调用则阻塞， 后调用则不阻塞
             logger.info("client called connect with rc: {}".format(rc))
+            if rc == 0:
+                self.pushButtonConnect.setEnabled(False)
+
             self.statusbar.showMessage("mqtt client is connecting!", msecs=5000)
             self.mqtt_client.loop_start()
 
@@ -191,8 +197,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_(self):
         self.close
 
+
+APP_STYLE_SHEET = """
+QPushButton {
+    background-color: rgb(200,200,200);
+    border-style: outset;
+    border-width: 1px;
+    border-radius: 5px;
+    border-color: beige;
+    font: bold 14px;
+    min-width: 5em;
+    padding: 5px;
+}
+QPushButton:pressed {
+    background-color: rgb(0, 100, 200);
+    border-style: inset;
+}
+
+QPushButton#pushButtonConnect {
+    background-color: rgb(255, 255, 255);
+}
+QPushButton#pushButtonConnect:pressed {
+    background-color: rgb(0, 255, 255);
+}
+"""
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+
+
+
+    # app.setStyleSheet("QLineEdit{border:1px solid rgb(255, 180, 180); background:rgb(100,100,250);}")
+    app.setStyleSheet(APP_STYLE_SHEET)
 
     mw = MainWindow()
     mw.show()
